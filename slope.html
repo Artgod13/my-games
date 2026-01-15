@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slope | Game</title>
+    <title>Slope | Unblocked</title>
     <style>
         body, html {
             margin: 0;
@@ -18,12 +18,28 @@
             width: 100%;
             height: 100%;
         }
+        /* Style for the loading text in case the Unity files take a second */
+        #loading-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: -1;
+        }
     </style>
 </head>
 <body>
-    <iframe src="https://anonymousbirb5100.github.io/slope/" 
-            allowfullscreen="true" 
-            scrolling="no">
+
+    <div id="loading-message">INITIALIZING UNITY ENGINE...</div>
+
+    <iframe 
+        src="https://anonymousbirb5100.github.io/slope/" 
+        allowfullscreen="true" 
+        scrolling="no"
+        allow="autoplay; fullscreen; keyboard">
     </iframe>
+
 </body>
 </html>
