@@ -23,26 +23,25 @@
             margin: 0; display: flex; height: 100vh; width: 100vw;
             font-family: 'Segoe UI', sans-serif; overflow: hidden; 
             background-color: var(--bg-color); color: var(--text-color);
-            transition: all 0.3s ease;
+            transition: background-color 0.2s;
         }
 
         #sidebar {
             width: 240px; display: flex; flex-direction: column;
             padding: 15px; gap: 12px; height: 100vh; overflow-y: auto; 
             background-color: var(--sidebar-bg); border-right: 2px solid var(--btn-border);
-            box-sizing: border-box; transition: margin-left 0.3s ease;
+            box-sizing: border-box; 
         }
 
-        #sidebar.hidden { margin-left: -240px; }
+        #sidebar.hidden { margin-left: -240px; transition: margin-left 0.3s ease; }
 
-        /* THEMED DROPDOWN MENU */
-        #theme-select {
+        select#theme-select {
             padding: 10px; border-radius: 8px; border: 1px solid var(--btn-border);
             background-color: var(--btn-bg); color: var(--text-color);
             font-size: 0.9rem; font-weight: bold; cursor: pointer; outline: none;
-            appearance: none; /* Removes default browser styling */
-            -webkit-appearance: none;
         }
+
+        select#theme-select option { background-color: var(--btn-bg); color: var(--text-color); }
 
         #search-bar {
             padding: 10px; border-radius: 8px; border: 1px solid var(--btn-border);
@@ -57,18 +56,19 @@
             width: 100%; display: block; margin-bottom: 5px; cursor: pointer;
         }
 
-        .game-btn:hover { background-color: var(--accent); color: white; transform: translateY(-2px); }
+        .game-btn:hover { background-color: var(--accent); color: white; }
 
         .ctrl-btn {
             padding: 8px; cursor: pointer; border-radius: 5px; border: none;
             background: var(--accent); color: white; font-weight: bold;
         }
 
-        /* MAIN VIEW matches background color now */
         #main-view { 
             flex-grow: 1; height: 100vh; position: relative; 
-            background-color: var(--bg-color); /* This fixes the empty screen color */
+            background-color: var(--bg-color);
         }
+        
+        #iframe-container { width:100%; height:100%; background-color: var(--bg-color); }
         
         #restore-btn { position: absolute; top: 10px; left: 10px; z-index: 1000; display: none; }
         iframe { width: 100%; height: 100%; border: none; background: transparent; }
@@ -100,14 +100,20 @@
             <button onclick="loadGame('basketball.html')" class="game-btn">Basketball Stars</button>
             <button onclick="loadGame('hexgl.html')" class="game-btn">HexGL</button>
             <button onclick="loadGame('breaklock.html')" class="game-btn">Breaklock</button>
+            <button onclick="loadGame('lawnmower.html')" class="game-btn">Lawnmower Game</button>
+            <button onclick="loadGame('minesweeper.html')" class="game-btn">Minesweeper</button>
+            <button onclick="loadGame('overflowing.html')" class="game-btn">Overflowing Palette</button>
+            <button onclick="loadGame('polytrack.html')" class="game-btn">Poly Track</button>
             <button onclick="loadGame('slope.html')" class="game-btn">Slope</button>
+            <button onclick="loadGame('snake.html')" class="game-btn">Play Snake</button>
+            <button onclick="loadGame('snowrider.html')" class="game-btn">Snow Rider 3D</button>
             <button onclick="loadGame('tetris.html')" class="game-btn">Tetris</button>
-            </div>
+        </div>
     </div>
 
     <div id="main-view">
         <button id="restore-btn" class="ctrl-btn" onclick="toggleFullScreen()">Show Menu</button>
-        <div id="iframe-container" style="width:100%; height:100%;">
+        <div id="iframe-container">
             <iframe id="game-iframe" src="about:blank"></iframe>
         </div>
     </div>
@@ -130,7 +136,9 @@
             if (blockList.includes(e.code)) { e.preventDefault(); }
         }, false);
 
-        function changeTheme(themeName) { document.body.setAttribute('data-theme', themeName); }
+        function changeTheme(themeName) { 
+            document.body.setAttribute('data-theme', themeName); 
+        }
 
         function toggleFullScreen() {
             const sidebar = document.getElementById('sidebar');
