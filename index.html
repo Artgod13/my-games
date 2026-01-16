@@ -51,15 +51,23 @@
         }
 
         #sidebar {
-            width: 220px; display: flex; flex-direction: column;
+            width: 240px; display: flex; flex-direction: column;
             padding: 15px; gap: 12px; height: 100vh; overflow-y: auto; 
             background-color: var(--sidebar-bg); border-right: 2px solid var(--btn-border);
             box-sizing: border-box; transition: margin-left 0.3s ease;
         }
 
-        #sidebar.hidden { margin-left: -220px; }
+        #sidebar.hidden { margin-left: -240px; }
 
         h2 { font-size: 1rem; margin: 10px 0 5px 0; }
+
+        /* SEARCH BAR STYLING */
+        #search-bar {
+            padding: 10px; border-radius: 8px; border: 1px solid var(--btn-border);
+            background-color: var(--btn-bg); color: var(--text-color);
+            font-size: 0.9rem; margin-bottom: 5px; outline: none;
+        }
+        #search-bar:focus { border-color: var(--accent); }
 
         #theme-select {
             padding: 8px; border-radius: 5px; background: var(--btn-bg);
@@ -72,6 +80,7 @@
             text-align: center; transition: 0.2s; font-weight: bold;
             background-color: var(--btn-bg); color: var(--text-color);
             border: 1px solid var(--btn-border);
+            display: block; /* Important for filtering */
         }
 
         .game-btn:hover {
@@ -113,20 +122,23 @@
         
         <hr style="width:100%; border: 0; border-top: 1px solid var(--btn-border);">
         
-        <h2>My Games</h2>
-        <a href="2048.html" target="display" class="game-btn">2048</a>
-        <a href="basketball.html" target="display" class="game-btn">Basketball Stars</a>
-        <a href="hexgl.html" target="display" class="game-btn">HexGL</a>
-        <a href="breaklock.html" target="display" class="game-btn">Breaklock</a>
-        <a href="lawnmower.html" target="display" class="game-btn">Lawnmower Game</a>
-        <a href="minecraft.html" target="display" class="game-btn">Minecraft</a>
-        <a href="minesweeper.html" target="display" class="game-btn">Minesweeper</a>
-        <a href="overflowing.html" target="display" class="game-btn">Overflowing Palette</a>
-        <a href="polytrack.html" target="display" class="game-btn">Poly Track</a>
-        <a href="slope.html" target="display" class="game-btn">Slope</a>
-        <a href="snake.html" target="display" class="game-btn">Play Snake</a>
-        <a href="snowrider.html" target="display" class="game-btn">Snow Rider 3D</a>
-        <a href="tetris.html" target="display" class="game-btn">Tetris</a>
+        <h2>Find a Game</h2>
+        <input type="text" id="search-bar" placeholder="Search games..." onkeyup="filterGames()">
+
+        <div id="game-list">
+            <a href="2048.html" target="display" class="game-btn">2048</a>
+            <a href="basketball.html" target="display" class="game-btn">Basketball Stars</a>
+            <a href="hexgl.html" target="display" class="game-btn">HexGL</a>
+            <a href="breaklock.html" target="display" class="game-btn">Breaklock</a>
+            <a href="lawnmower.html" target="display" class="game-btn">Lawnmower Game</a>
+            <a href="minesweeper.html" target="display" class="game-btn">Minesweeper</a>
+            <a href="overflowing.html" target="display" class="game-btn">Overflowing Palette</a>
+            <a href="polytrack.html" target="display" class="game-btn">Poly Track</a>
+            <a href="slope.html" target="display" class="game-btn">Slope</a>
+            <a href="snake.html" target="display" class="game-btn">Play Snake</a>
+            <a href="snowrider.html" target="display" class="game-btn">Snow Rider 3D</a>
+            <a href="tetris.html" target="display" class="game-btn">Tetris</a>
+        </div>
     </div>
 
     <div id="main-view">
@@ -135,12 +147,12 @@
     </div>
 
     <script>
-        // 1. Theme Change Function
+        // 1. Theme Logic
         function changeTheme(themeName) {
             document.body.setAttribute('data-theme', themeName);
         }
 
-        // 2. Full Screen Toggle
+        // 2. Full Screen Logic
         function toggleFullScreen() {
             const sidebar = document.getElementById('sidebar');
             const restoreBtn = document.getElementById('restore-btn');
@@ -148,25 +160,36 @@
             restoreBtn.style.display = sidebar.classList.contains('hidden') ? 'block' : 'none';
         }
 
-        // 3. THE "ALL-KEYS" CATCHER
-        window.addEventListener("keydown", function(e) {
-            // This tells the browser: "If the user is playing a game, 
-            // don't do anything with the keyboard except send it to the game."
+        // 3. SEARCH/FILTER LOGIC
+        function filterGames() {
+            const input = document.getElementById('search-bar').value.toLowerCase();
+            const buttons = document.getElementsByClassName('game-btn');
             
-            // We allow 'F12' so you can still inspect code if you need to,
-            // but block everything else that causes scrolling or jumping.
+            for (let i = 0; i < buttons.length; i++) {
+                const gameName = buttons[i].textContent.toLowerCase();
+                if (gameName.includes(input)) {
+                    buttons[i].style.display = "block";
+                } else {
+                    buttons[i].style.display = "none";
+                }
+            }
+        }
+
+        // 4. ALL-KEYS INPUT PROTECTION (Excluding the Search Bar)
+        window.addEventListener("keydown", function(e) {
+            // Check if the user is currently typing in the search bar
+            if (document.activeElement.id === "search-bar") return;
+
             if (e.key !== "F12") {
                 e.preventDefault();
             }
         }, false);
 
-        // 4. AUTO-FOCUS FIX
-        // This makes sure the game "grabs" your keyboard the second you click it
+        // 5. AUTO-FOCUS GAME
         document.querySelectorAll('.game-btn').forEach(button => {
             button.addEventListener('click', () => {
                 setTimeout(() => {
-                    const gameFrame = document.querySelector('iframe');
-                    gameFrame.focus();
+                    document.querySelector('iframe').focus();
                 }, 200);
             });
         });
