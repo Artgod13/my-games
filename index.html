@@ -3,109 +3,98 @@
 <head>
     <title>My Game Portal</title>
     <style>
+        /* THEME COLOR DEFINITIONS */
+        :root {
+            --bg-color: #1a1a1a;
+            --sidebar-bg: #252525;
+            --text-color: #e0e0e0;
+            --btn-bg: #333;
+            --btn-border: #555;
+            --accent: #007bff;
+        }
+
+        /* DATA ATTRIBUTES FOR DIFFERENT THEMES */
+        [data-theme="light"] {
+            --bg-color: #ffffff; --sidebar-bg: #f4f4f4; --text-color: #333;
+            --btn-bg: #fff; --btn-border: #ccc; --accent: #007bff;
+        }
+        [data-theme="blood"] {
+            --bg-color: #000000; --sidebar-bg: #1a0000; --text-color: #ff4d4d;
+            --btn-bg: #2b0000; --btn-border: #800000; --accent: #ff0000;
+        }
+        [data-theme="emerald"] {
+            --bg-color: #0b1a0b; --sidebar-bg: #142614; --text-color: #a3cfbb;
+            --btn-bg: #1c331c; --btn-border: #2d5a27; --accent: #2ecc71;
+        }
+        [data-theme="cyber"] {
+            --bg-color: #0d0221; --sidebar-bg: #0f0844; --text-color: #00f2ff;
+            --btn-bg: #1a1b41; --btn-border: #00f2ff; --accent: #ff00ff;
+        }
+
         body { 
-            margin: 0; 
-            display: flex; 
-            height: 100vh; 
-            width: 100vw;
-            font-family: 'Segoe UI', sans-serif; 
-            overflow: hidden; 
-            transition: background-color 0.3s;
+            margin: 0; display: flex; height: 100vh; width: 100vw;
+            font-family: 'Segoe UI', sans-serif; overflow: hidden; 
+            background-color: var(--bg-color); color: var(--text-color);
+            transition: all 0.3s ease;
         }
 
-        /* THEME STYLES */
-        body.light { background-color: #ffffff; color: #333; }
-        body.light #sidebar { background-color: #f4f4f4; border-right: 2px solid #ddd; }
-        body.light .game-btn { background-color: white; color: #333; border: 1px solid #ccc; }
-
-        body.dark { background-color: #1a1a1a; color: #e0e0e0; }
-        body.dark #sidebar { background-color: #252525; border-right: 2px solid #444; }
-        body.dark .game-btn { background-color: #333; color: #e0e0e0; border: 1px solid #555; }
-        body.dark h2 { color: #fff; }
-
-        /* SIDEBAR LOGIC */
         #sidebar {
-            width: 220px;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            gap: 12px;
-            height: 100vh;
-            overflow-y: auto; 
-            box-sizing: border-box;
-            transition: margin-left 0.3s ease; /* Smooth sliding */
+            width: 220px; display: flex; flex-direction: column;
+            padding: 15px; gap: 12px; height: 100vh; overflow-y: auto; 
+            background-color: var(--sidebar-bg); border-right: 2px solid var(--btn-border);
+            box-sizing: border-box; transition: margin-left 0.3s ease;
         }
 
-        /* Hidden state for Full Screen */
-        #sidebar.hidden {
-            margin-left: -220px;
-        }
+        #sidebar.hidden { margin-left: -220px; }
 
-        h2 { font-size: 1.1rem; margin-top: 0; margin-bottom: 5px; }
+        h2 { font-size: 1rem; margin: 10px 0 5px 0; color: var(--text-color); }
+
+        /* THEME DROPDOWN STYLING */
+        #theme-select {
+            padding: 8px; border-radius: 5px; background: var(--btn-bg);
+            color: var(--text-color); border: 1px solid var(--btn-border);
+            cursor: pointer; font-weight: bold; width: 100%;
+        }
 
         .game-btn {
-            padding: 12px;
-            text-decoration: none;
-            border-radius: 8px;
-            text-align: center;
-            transition: 0.2s;
-            font-weight: bold;
+            padding: 12px; text-decoration: none; border-radius: 8px;
+            text-align: center; transition: 0.2s; font-weight: bold;
+            background-color: var(--btn-bg); color: var(--text-color);
+            border: 1px solid var(--btn-border);
         }
 
         .game-btn:hover {
-            background-color: #007bff;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* CONTROL BUTTONS */
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 10px;
+            background-color: var(--accent); color: white;
+            transform: translateY(-2px); border-color: var(--accent);
         }
 
         .ctrl-btn {
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 5px;
-            border: none;
-            background: #007bff;
-            color: white;
-            font-weight: bold;
+            padding: 8px; cursor: pointer; border-radius: 5px; border: none;
+            background: var(--accent); color: white; font-weight: bold;
         }
 
-        #main-view { 
-            flex-grow: 1; 
-            height: 100vh;
-            position: relative;
-        }
-
+        #main-view { flex-grow: 1; height: 100vh; position: relative; }
         iframe { width: 100%; height: 100%; border: none; }
-
-        /* FLOATING RESTORE BUTTON - Only visible when sidebar is hidden */
+        
         #restore-btn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            display: none;
-            opacity: 0.5;
+            position: absolute; top: 10px; left: 10px; z-index: 1000;
+            display: none; opacity: 0.6;
         }
         #restore-btn:hover { opacity: 1; }
     </style>
 </head>
-<body class="dark">
-
-    <div id="sidebar">
-        <h2>Settings</h2>
-        <div class="controls">
-            <button class="ctrl-btn" onclick="toggleTheme()">Toggle Dark/Light</button>
-            <button class="ctrl-btn" onclick="toggleFullScreen()" style="background: #28a745;">Full Screen Mode</button>
-        </div>
+<body data-theme="blood"> <div id="sidebar">
+        <h2>Appearance</h2>
+        <select id="theme-select" onchange="changeTheme(this.value)">
+            <option value="blood">Blood Red (Dark)</option>
+            <option value="light">Classic Light</option>
+            <option value="emerald">Emerald Forest</option>
+            <option value="cyber">Cyberpunk</option>
+        </select>
         
-        <hr style="width:100%; border: 0; border-top: 1px solid #555;">
+        <button class="ctrl-btn" onclick="toggleFullScreen()" style="margin-top:5px;">Full Screen</button>
+        
+        <hr style="width:100%; border: 0; border-top: 1px solid var(--btn-border);">
         
         <h2>Games</h2>
         <a href="2048.html" target="display" class="game-btn">2048</a>
@@ -128,25 +117,17 @@
     </div>
 
     <script>
-        function toggleTheme() {
-            document.body.classList.toggle('dark');
-            document.body.classList.toggle('light');
+        function changeTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
         }
 
         function toggleFullScreen() {
             const sidebar = document.getElementById('sidebar');
             const restoreBtn = document.getElementById('restore-btn');
             sidebar.classList.toggle('hidden');
-            
-            // Show the "Show Menu" button if the sidebar is hidden
-            if (sidebar.classList.contains('hidden')) {
-                restoreBtn.style.display = 'block';
-            } else {
-                restoreBtn.style.display = 'none';
-            }
+            restoreBtn.style.display = sidebar.classList.contains('hidden') ? 'block' : 'none';
         }
 
-        // Prevent Scroll
         window.addEventListener("keydown", function(e) {
             if(["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
                 e.preventDefault();
