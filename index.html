@@ -135,10 +135,12 @@
     </div>
 
     <script>
+        // 1. Theme Change Function
         function changeTheme(themeName) {
             document.body.setAttribute('data-theme', themeName);
         }
 
+        // 2. Full Screen Toggle
         function toggleFullScreen() {
             const sidebar = document.getElementById('sidebar');
             const restoreBtn = document.getElementById('restore-btn');
@@ -146,11 +148,28 @@
             restoreBtn.style.display = sidebar.classList.contains('hidden') ? 'block' : 'none';
         }
 
+        // 3. THE "ALL-KEYS" CATCHER
         window.addEventListener("keydown", function(e) {
-            if(["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
+            // This tells the browser: "If the user is playing a game, 
+            // don't do anything with the keyboard except send it to the game."
+            
+            // We allow 'F12' so you can still inspect code if you need to,
+            // but block everything else that causes scrolling or jumping.
+            if (e.key !== "F12") {
                 e.preventDefault();
             }
         }, false);
+
+        // 4. AUTO-FOCUS FIX
+        // This makes sure the game "grabs" your keyboard the second you click it
+        document.querySelectorAll('.game-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                setTimeout(() => {
+                    const gameFrame = document.querySelector('iframe');
+                    gameFrame.focus();
+                }, 200);
+            });
+        });
     </script>
 </body>
 </html>
