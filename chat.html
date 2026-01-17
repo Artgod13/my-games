@@ -45,29 +45,43 @@
 
     let myName = localStorage.getItem('chat-name') || "User" + Math.floor(Math.random() * 999);
 
-    // 2. SEND LOGIC with ADMIN COMMANDS
+        // 2. SEND LOGIC with ADMIN COMMANDS
     function send() {
         const input = document.getElementById('msg-input');
-        const text = input.value.trim();
+        const text = input.value.trim(); // Removes accidental spaces at start/end
         if(!text) return;
 
+        // Check if it's a command
         if (text.startsWith('/')) {
-            const parts = text.split(' ');
-            const cmd = parts[0];
+            const parts = text.split(/\s+/); // Splits by ANY number of spaces
+            const cmd = parts[0].toLowerCase(); // Makes it case-insensitive
             const pass = parts[1];
             const val = parts.slice(2).join(' ');
 
+            // LOGIC GATE: If password matches
             if (pass === ADMIN_PASSWORD) {
-                if (cmd === '/clear') channel.publish('admin-cmd', { action: 'clear' });
-                else if (cmd === '/alert') channel.publish('admin-cmd', { action: 'alert', message: val });
-                else if (cmd === '/freeze') channel.publish('admin-cmd', { action: 'freeze' });
-                else if (cmd === '/unfreeze') channel.publish('admin-cmd', { action: 'unfreeze' });
-                else if (cmd === '/party') channel.publish('admin-cmd', { action: 'party' });
+                console.log("Admin command detected:", cmd); // Helps you see if it works in Console
+                
+                if (cmd === '/clear') {
+                    channel.publish('admin-cmd', { action: 'clear' });
+                } else if (cmd === '/alert') {
+                    channel.publish('admin-cmd', { action: 'alert', message: val });
+                } else if (cmd === '/freeze') {
+                    channel.publish('admin-cmd', { action: 'freeze' });
+                } else if (cmd === '/unfreeze') {
+                    channel.publish('admin-cmd', { action: 'unfreeze' });
+                } else if (cmd === '/party') {
+                    channel.publish('admin-cmd', { action: 'party' });
+                }
+                
                 input.value = "";
-                return;
+                return; // Exit so it doesn't send as a normal message
+            } else {
+                console.log("Wrong password attempted for command");
             }
         }
 
+        // If it's NOT a command, or password was wrong, send as normal message
         channel.publish('msg', {
             user: myName,
             text: text,
