@@ -2,97 +2,17 @@
 <html>
 <head>
     <style>
-        /* CSS Variables - These are updated by the Sidebar Theme */
-        :root { 
-            --bg: #121212; 
-            --accent: #007bff; 
-            --text: #e0e0e0; 
-        }
-
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            transition: background 0.3s ease;
-            overflow: hidden;
-        }
-
-        #header { 
-            padding: 12px 15px; 
-            background: rgba(0,0,0,0.2); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid rgba(255,255,255,0.1); 
-        }
-
-        #chat-box { 
-            flex-grow: 1; 
-            overflow-y: auto; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-        }
-        
-        /* Message Bubbles */
-        .msg { 
-            background: rgba(255,255,255,0.07); 
-            padding: 10px 14px; 
-            border-radius: 12px; 
-            width: fit-content; 
-            max-width: 80%; 
-            border-bottom-left-radius: 2px;
-            animation: fadeIn 0.2s ease-in;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        .msg-header { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 4px; }
+        :root { --bg: #121212; --accent: #007bff; --text: #e0e0e0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; transition: 0.3s; overflow: hidden; }
+        #header { padding: 12px 15px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        #chat-box { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { background: rgba(255,255,255,0.07); padding: 10px 14px; border-radius: 12px; width: fit-content; max-width: 80%; border-bottom-left-radius: 2px; }
         .username { color: var(--accent); font-weight: bold; font-size: 0.85rem; }
-        .time { color: gray; font-size: 0.7rem; }
-        .text { font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; }
-
-        #input-area { 
-            padding: 15px; 
-            background: rgba(0,0,0,0.3); 
-            display: flex; 
-            gap: 10px; 
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        input { 
-            flex-grow: 1; 
-            padding: 12px; 
-            border-radius: 8px; 
-            border: 1px solid rgba(255,255,255,0.1); 
-            background: rgba(255,255,255,0.05); 
-            color: var(--text); 
-            outline: none; 
-        }
-
-        button { 
-            padding: 10px 20px; 
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-        }
-
-        #online-tag { 
-            background: var(--accent); 
-            color: white; 
-            padding: 4px 10px; 
-            border-radius: 20px; 
-            font-size: 0.75rem; 
-            font-weight: bold;
-        }
+        .time { color: gray; font-size: 0.7rem; margin-left: 10px; }
+        #input-area { padding: 15px; background: rgba(0,0,0,0.3); display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+        input { flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--text); outline: none; }
+        button { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #online-tag { background: var(--accent); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; }
     </style>
 </head>
 <body>
@@ -102,7 +22,7 @@
     <button onclick="changeName()" style="background: rgba(255,255,255,0.1); font-size: 0.75rem;">Edit Name</button>
 </div>
 
-<div id="chat-box" id="messages"></div>
+<div id="chat-box"></div>
 
 <div id="input-area">
     <input type="text" id="msg-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') send()">
@@ -112,94 +32,104 @@
 <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
 
 <script>
-    // 1. CONNECTION (Unique Client ID + Polling Fallback)
+    // 1. CONFIG (Set your password here!)
+    const ADMIN_PASSWORD = "1234"; 
     const uniqueId = 'user-' + Math.random().toString(36).substr(2, 9);
     
     const ably = new Ably.Realtime({
         key: 'EEkkWA.G6icog:T0iJzeqrPkW15N9A7JANivEDFWkKrTp2XmPlXoAzSS4',
         clientId: uniqueId,
-        transports: ['xhr_polling', 'jsonp'] // Forces it through school filters
+        transports: ['xhr_polling', 'jsonp']
     });
-
     const channel = ably.channels.get('school-chat', { params: { rewind: '20' } });
 
-    // 2. NICKNAME LOGIC
     let myName = localStorage.getItem('chat-name') || "User" + Math.floor(Math.random() * 999);
-    
-    function changeName() {
-        let n = prompt("Enter nickname:", myName);
-        if(n && n.trim() !== "") {
-            myName = n;
-            localStorage.setItem('chat-name', n);
-            // Update presence with new name
-            channel.presence.update({ name: myName });
-        }
-    }
 
-    // 3. SENDING DATA
+    // 2. SEND LOGIC with ADMIN COMMANDS
     function send() {
         const input = document.getElementById('msg-input');
-        if(!input.value.trim()) return;
+        const text = input.value.trim();
+        if(!text) return;
+
+        if (text.startsWith('/')) {
+            const parts = text.split(' ');
+            const cmd = parts[0];
+            const pass = parts[1];
+            const val = parts.slice(2).join(' ');
+
+            if (pass === ADMIN_PASSWORD) {
+                if (cmd === '/clear') channel.publish('admin-cmd', { action: 'clear' });
+                else if (cmd === '/alert') channel.publish('admin-cmd', { action: 'alert', message: val });
+                else if (cmd === '/freeze') channel.publish('admin-cmd', { action: 'freeze' });
+                else if (cmd === '/unfreeze') channel.publish('admin-cmd', { action: 'unfreeze' });
+                else if (cmd === '/party') channel.publish('admin-cmd', { action: 'party' });
+                input.value = "";
+                return;
+            }
+        }
 
         channel.publish('msg', {
             user: myName,
-            text: input.value,
+            text: text,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
         input.value = "";
     }
 
-    // 4. RECEIVING DATA
+    // 3. RECEIVE SYSTEM
     channel.subscribe('msg', (m) => {
         const chatBox = document.getElementById('chat-box');
         const div = document.createElement('div');
         div.className = 'msg';
-        
-        div.innerHTML = `
-            <div class="msg-header">
-                <span class="username">${m.data.user}</span>
-                <span class="time">${m.data.timestamp}</span>
-            </div>
-            <div class="text">${m.data.text}</div>
-        `;
-        
+        div.innerHTML = `<div class="msg-header"><span class="username">${m.data.user}</span><span class="time">${m.data.timestamp}</span></div><div>${m.data.text}</div>`;
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    // 5. PRESENCE (Online Count Fix)
-    channel.presence.enter({ name: myName });
-
-    function refreshPresence() {
-        channel.presence.get((err, members) => {
-            if(!err) {
-                // Count unique clientIds to ensure different devices are recognized
-                document.getElementById('count').innerText = members.length;
-            }
-        });
-    }
-
-    // Listen for set changes and check every few seconds as a fallback
-    channel.presence.subscribe(['enter', 'leave', 'update'], refreshPresence);
-    setInterval(refreshPresence, 5000); 
-
-    // 6. THEME SYNC LISTENER (Bridges the gap with index.html)
-    window.addEventListener('message', (event) => {
-        if (event.data.type === 'theme-update') {
-            const theme = event.data.theme;
-            const root = document.documentElement;
-            root.style.setProperty('--bg', theme.bg);
-            root.style.setProperty('--accent', theme.accent);
-            root.style.setProperty('--text', theme.text);
+    channel.subscribe('admin-cmd', (cmd) => {
+        const chatBox = document.getElementById('chat-box');
+        const input = document.getElementById('msg-input');
+        switch(cmd.data.action) {
+            case 'clear': chatBox.innerHTML = ""; break;
+            case 'alert': alert("ADMIN: " + cmd.data.message); break;
+            case 'freeze': input.disabled = true; input.placeholder = "Frozen..."; break;
+            case 'unfreeze': input.disabled = false; input.placeholder = "Type..."; break;
+            case 'party': 
+                let i = 0, colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00'];
+                let loop = setInterval(() => {
+                    document.body.style.background = colors[i % 4];
+                    if(++i > 15) { 
+                        clearInterval(loop); 
+                        const s = JSON.parse(localStorage.getItem('user-theme-choice'));
+                        document.body.style.background = "var(--bg)"; 
+                    }
+                }, 100);
+                break;
         }
     });
 
-    // Initial Theme Check
-    const savedTheme = JSON.parse(localStorage.getItem('selected-theme'));
-    if (savedTheme) {
-        document.documentElement.style.setProperty('--bg', savedTheme.bg);
-        document.documentElement.style.setProperty('--accent', savedTheme.accent);
-        document.documentElement.style.setProperty('--text', savedTheme.text);
+    // 4. PRESENCE & THEME SYNC
+    channel.presence.enter({ name: myName });
+    function refreshPresence() {
+        channel.presence.get((err, members) => {
+            if(!err) document.getElementById('count').innerText = members.length;
+        });
+    }
+    channel.presence.subscribe(['enter', 'leave', 'update'], refreshPresence);
+    setInterval(refreshPresence, 5000);
+
+    window.addEventListener('message', (event) => {
+        if (event.data.type === 'theme-update') {
+            const theme = event.data.theme;
+            document.documentElement.style.setProperty('--bg', theme.bg);
+            document.documentElement.style.setProperty('--accent', theme.accent);
+            document.documentElement.style.setProperty('--text', theme.text);
+        }
+    });
+
+    function changeName() {
+        let n = prompt("Name:", myName);
+        if(n) { myName = n; localStorage.setItem('chat-name', n); }
     }
 </script>
 </body>
