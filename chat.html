@@ -11,7 +11,7 @@
         }
         #header { padding: 10px 15px; background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
         #chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: rgba(255,255,255,0.08); padding: 10px; border-radius: 12px; width: fit-content; max-width: 85%; }
+        .msg { background: rgba(255,255,255,0.08); padding: 10px; border-radius: 12px; width: fit-content; max-width: 85%; border: 1px solid rgba(255,255,255,0.05); }
         .u-name { color: var(--accent); font-weight: bold; font-size: 0.85rem; }
         #input-area { padding: 15px; background: rgba(0,0,0,0.4); display: flex; gap: 10px; }
         input { flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; outline: none; }
@@ -28,14 +28,14 @@
 <div id="chat-box"></div>
 
 <div id="input-area">
-    <input type="text" id="msg-input" placeholder="Connecting..." onkeypress="if(event.key==='Enter') send()">
+    <input type="text" id="msg-input" placeholder="Waking up server..." onkeypress="if(event.key==='Enter') send()">
     <button onclick="send()">Send</button>
 </div>
 
 <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
 
 <script>
-    // --- 1. THEME ---
+    // --- 1. THEME REPAIR ---
     function applyTheme() {
         try {
             const raw = localStorage.getItem('selected-theme');
@@ -46,32 +46,89 @@
                 document.documentElement.style.setProperty('--text', s.text);
                 document.body.style.backgroundColor = s.bg;
             }
-        } catch (e) {}
+        } catch (e) { console.error("Theme Error"); }
     }
     applyTheme();
 
-    // --- 2. CONFIG ---
+    // --- 2. THE CORE CONNECTION ---
     const ADMIN_PASS = "1234";
     const sessionStart = Date.now();
+    let myName = localStorage.getItem('chat-name') || "User" + Math.floor(Math.random() * 999);
+
+    // Bypassing school blocks with aggressive polling
     const ably = new Ably.Realtime({
         key: 'EEkkWA.G6icog:T0iJzeqrPkW15N9A7JANivEDFWkKrTp2XmPlXoAzSS4',
         transports: ['xhr_polling', 'jsonp'],
-        useBinaryProtocol: false 
+        useBinaryProtocol: false,
+        recover: true // Automatically resumes if interrupted
     });
 
     const channel = ably.channels.get('school-chat', { params: { rewind: '1d' } });
-    let myName = localStorage.getItem('chat-name') || "User" + Math.floor(Math.random() * 999);
 
     ably.connection.on('connected', () => {
-        document.getElementById('msg-input').placeholder = "Connected! Type a message...";
+        document.getElementById('msg-input').placeholder = "Connected! Start chatting...";
+        console.log("Connection Established.");
     });
 
-    // --- 3. SEND & RECEIVE ---
+    // --- 3. THE "FORCE-LISTEN" SUBSCRIBERS ---
+    // This is the most critical fix: using a direct handler function
+    function handleIncomingMessage(m) {
+        const chatBox = document.getElementById('chat-box');
+        if (!chatBox) return;
+
+        const div = document.createElement('div');
+        div.className = 'msg';
+        div.innerHTML = `<div class="u-name">${m.data.userName} <span style="color:gray; font-size:0.65rem; font-weight:normal;">${m.data.time}</span></div><div>${m.data.msgText}</div>`;
+        
+        chatBox.appendChild(div);
+        if (chatBox.children.length > 150) chatBox.removeChild(chatBox.firstChild);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function handleAdminCommand(cmd) {
+        // Inequality Check: Ignore messages from before we joined
+        if (cmd.data.sentAt < sessionStart) return;
+
+        const input = document.getElementById('msg-input');
+        const data = cmd.data;
+
+        if(data.action === 'clear') document.getElementById('chat-box').innerHTML = "";
+        if(data.action === 'alert') alert("ADMIN NOTICE: " + data.message);
+        if(data.action === 'freeze') input.disabled = true;
+        if(data.action === 'unfreeze') input.disabled = false;
+        
+        // NICK Command
+        if(data.action === 'nick' && myName === data.target) {
+            myName = data.newName;
+            localStorage.setItem('chat-name', myName);
+            alert("Your name was changed to: " + myName);
+        }
+
+        // PARTY Command
+        if(data.action === 'party') {
+            let i = 0, colors = ['red', 'green', 'blue', 'yellow', 'purple'];
+            let loop = setInterval(() => {
+                document.body.style.setProperty('background-color', colors[i%5], 'important');
+                if(++i > 30) { 
+                    clearInterval(loop); 
+                    document.body.style.backgroundColor = ""; 
+                    applyTheme(); 
+                }
+            }, 100);
+        }
+    }
+
+    // Attach handlers
+    channel.subscribe('msg', handleIncomingMessage);
+    channel.subscribe('admin-cmd', handleAdminCommand);
+
+    // --- 4. SEND LOGIC ---
     function send() {
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
         if(!text) return;
 
+        // Command processing
         if (text.startsWith('/')) {
             const p = text.split(' ');
             const cmd = p[0].toLowerCase().replace('/', '');
@@ -87,6 +144,7 @@
             }
         }
 
+        // Regular message processing
         channel.publish('msg', { 
             userName: myName, 
             msgText: text, 
@@ -95,55 +153,28 @@
         input.value = "";
     }
 
-    channel.subscribe('msg', (m) => {
-        const chatBox = document.getElementById('chat-box');
-        const div = document.createElement('div');
-        div.className = 'msg';
-        div.innerHTML = `<div class="u-name">${m.data.userName} <span style="color:gray; font-size:0.65rem; font-weight:normal;">${m.data.time}</span></div><div>${m.data.msgText}</div>`;
-        chatBox.appendChild(div);
-        if (chatBox.children.length > 100) chatBox.removeChild(chatBox.firstChild);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    });
-
-    // --- 4. ADMIN ---
-    channel.subscribe('admin-cmd', (cmd) => {
-        if (cmd.data.sentAt < sessionStart) return;
-        const input = document.getElementById('msg-input');
-        const data = cmd.data;
-
-        if(data.action === 'clear') document.getElementById('chat-box').innerHTML = "";
-        if(data.action === 'alert') alert("ADMIN: " + data.message);
-        if(data.action === 'freeze') input.disabled = true;
-        if(data.action === 'unfreeze') input.disabled = false;
-        
-        // NICK COMMAND LOGIC
-        if(data.action === 'nick' && myName === data.target) {
-            myName = data.newName;
-            localStorage.setItem('chat-name', myName);
-            alert("Your name was changed to: " + myName);
-        }
-
-        if(data.action === 'party') {
-            let i = 0, colors = ['red', 'green', 'blue', 'yellow'];
-            let loop = setInterval(() => {
-                document.body.style.setProperty('background-color', colors[i%4], 'important');
-                if(++i > 20) { clearInterval(loop); document.body.style.backgroundColor = ""; applyTheme(); }
-            }, 100);
-        }
-    });
-
     // --- 5. PRESENCE ---
     channel.presence.enter({ name: myName });
-    function refresh() {
-        channel.presence.get((err, m) => { if(!err) document.getElementById('count').innerText = m.length; });
+    function refreshCount() {
+        channel.presence.get((err, m) => { 
+            if(!err) document.getElementById('count').innerText = m.length; 
+        });
     }
-    channel.presence.subscribe(['enter', 'leave', 'update'], refresh);
-    setInterval(refresh, 5000);
+    channel.presence.subscribe(['enter', 'leave', 'update'], refreshCount);
+    setInterval(refreshCount, 5000);
 
     function changeName() {
-        let n = prompt("New Name:", myName);
-        if(n) { myName = n; localStorage.setItem('chat-name', n); }
+        let n = prompt("Change name to:", myName);
+        if(n) { myName = n; localStorage.setItem('chat-name', n); channel.presence.update({ name: myName }); }
     }
+
+    // Window sync for theme updates
+    window.addEventListener('message', (e) => {
+        if (e.data.type === 'theme-update') {
+            localStorage.setItem('selected-theme', JSON.stringify(e.data.theme));
+            applyTheme();
+        }
+    });
 </script>
 </body>
 </html>
