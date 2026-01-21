@@ -130,10 +130,10 @@
 
         function loadGBA(romUrl) {
             const iframe = document.getElementById('game-iframe');
-            // This adds a "cors-anywhere" helper to the front of your link
-            const proxiedUrl = "https://corsproxy.io/?" + encodeURIComponent(romUrl);
-            iframe.src = "gba.html?rom=" + encodeURIComponent(proxiedUrl);
-            iframe.focus();
+            iframe.src = "gba.html?rom=" + encodeURIComponent(romUrl);
+            iframe.onload = () => {
+                iframe.focus();
+            };
         }
 
         function changeTheme(themeName) { 
