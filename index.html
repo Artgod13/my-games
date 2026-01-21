@@ -130,7 +130,10 @@
 
         function loadGBA(romUrl) {
             const iframe = document.getElementById('game-iframe');
-            iframe.src = "gba.html?rom=" + encodeURIComponent(romUrl);
+            // This tells the browser to look for the file relative to where index.html is
+            // We add a cache-buster (?v=1) to force GitHub to fetch the newest version
+            const finalPath = romUrl + "?v=" + Date.now();
+            iframe.src = "gba.html?rom=" + encodeURIComponent(finalPath);
             iframe.onload = () => {
                 iframe.focus();
             };
