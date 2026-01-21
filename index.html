@@ -130,8 +130,9 @@
 
         function loadGBA(romUrl) {
             const iframe = document.getElementById('game-iframe');
-            // This sends the link to your single gba.html file
-            iframe.src = "gba.html?rom=" + encodeURIComponent(romUrl);
+            // This adds a "cors-anywhere" helper to the front of your link
+            const proxiedUrl = "https://corsproxy.io/?" + encodeURIComponent(romUrl);
+            iframe.src = "gba.html?rom=" + encodeURIComponent(proxiedUrl);
             iframe.focus();
         }
 
