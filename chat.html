@@ -4,38 +4,60 @@
     <title>School Chat</title>
     <style>
         :root { --bg: #121212; --accent: #007bff; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #header { padding: 10px; background: #1f1f1f; display: flex; justify-content: space-between; border-bottom: 1px solid #333; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; display: flex; flex-direction: column; height: 100vh; 
+            transition: background-color 0.3s ease;
+        }
+        #header { padding: 10px 15px; background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
         #chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: #2a2a2a; padding: 10px; border-radius: 8px; width: fit-content; max-width: 80%; }
-        .u { color: var(--accent); font-weight: bold; font-size: 0.8rem; }
-        #input-area { padding: 15px; background: #1f1f1f; display: flex; gap: 10px; }
-        input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #111; color: white; outline: none; }
-        button { padding: 10px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .msg { background: rgba(255,255,255,0.08); padding: 10px; border-radius: 8px; width: fit-content; max-width: 80%; border: 1px solid rgba(255,255,255,0.05); }
+        .u { color: var(--accent); font-weight: bold; font-size: 0.85rem; margin-bottom: 3px; }
+        #input-area { padding: 15px; background: rgba(0,0,0,0.4); display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+        input { flex-grow: 1; padding: 12px; border-radius: 5px; border: 1px solid #444; background: #111; color: white; outline: none; }
+        button { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #count-pill { background: var(--accent); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div>Online: <span id="count">0</span></div>
-    <button onclick="changeName()">Edit Name</button>
+    <div id="count-pill">Online: <span id="count">0</span></div>
+    <button onclick="changeName()" style="background:none; border: 1px solid rgba(255,255,255,0.2); font-size: 0.7rem;">Edit Name</button>
 </div>
 
 <div id="chat-box"></div>
 
 <div id="input-area">
-    <input type="text" id="msg-input" placeholder="Type..." onkeypress="if(event.key==='Enter') send()">
+    <input type="text" id="msg-input" placeholder="Loading connection..." onkeypress="if(event.key==='Enter') send()">
     <button onclick="send()">Send</button>
 </div>
 
 <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
 
 <script>
+    // --- 1. THEME ENGINE ---
+    function applyTheme() {
+        try {
+            const raw = localStorage.getItem('selected-theme');
+            if (raw) {
+                const s = JSON.parse(raw);
+                document.documentElement.style.setProperty('--bg', s.bg);
+                document.documentElement.style.setProperty('--accent', s.accent);
+                document.documentElement.style.setProperty('--text', s.text);
+                document.body.style.backgroundColor = s.bg;
+            }
+        } catch (e) { console.warn("Theme not found or corrupted."); }
+    }
+    applyTheme();
+
+    // --- 2. CONFIG & ABLY ---
     const ADMIN_PASS = "1234";
     const sessionStart = Date.now();
     let myName = localStorage.getItem('chat-name') || "User" + Math.floor(Math.random() * 999);
 
-    // Initializing Ably
     const ably = new Ably.Realtime({
         key: 'EEkkWA.G6icog:T0iJzeqrPkW15N9A7JANivEDFWkKrTp2XmPlXoAzSS4',
         transports: ['xhr_polling', 'jsonp']
@@ -43,29 +65,25 @@
 
     const channel = ably.channels.get('school-chat');
 
-    // --- 1. ONLINE COUNTER LOGIC ---
+    // --- 3. COUNTER & PRESENCE ---
     function updateCount() {
         channel.presence.get((err, members) => {
             if (!err && members) {
-                // Updating the DOM with the set size
                 document.getElementById('count').innerText = members.length;
             }
         });
     }
 
     ably.connection.on('connected', () => {
-        // Enter the room and start the counter
+        document.getElementById('msg-input').placeholder = "Connected! Chat away...";
         channel.presence.enter({ name: myName }, (err) => {
             if(!err) updateCount();
         });
     });
 
-    // Subscribe to people joining/leaving
-    channel.presence.subscribe(['enter', 'leave'], () => {
-        updateCount();
-    });
+    channel.presence.subscribe(['enter', 'leave', 'update'], updateCount);
 
-    // --- 2. RECEIVING MESSAGES ---
+    // --- 4. MESSAGE SUBSCRIBER ---
     channel.subscribe('msg', (m) => {
         const chatBox = document.getElementById('chat-box');
         const div = document.createElement('div');
@@ -75,10 +93,9 @@
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    // --- 3. RECEIVING ADMIN COMMANDS ---
+    // --- 5. ADMIN COMMANDS ---
     channel.subscribe('admin-cmd', (cmd) => {
         if (cmd.data.sentAt < sessionStart) return;
-        
         const data = cmd.data;
         const input = document.getElementById('msg-input');
 
@@ -90,7 +107,7 @@
         if (data.action === 'nick' && myName === data.target) {
             myName = data.newName;
             localStorage.setItem('chat-name', myName);
-            channel.presence.update({ name: myName }); // Sync the new name to the counter
+            channel.presence.update({ name: myName });
             alert("Name updated to: " + myName);
         }
 
@@ -98,12 +115,15 @@
             let i = 0, colors = ['red', 'green', 'blue', 'yellow'];
             let loop = setInterval(() => {
                 document.body.style.backgroundColor = colors[i%4];
-                if(++i > 20) { clearInterval(loop); document.body.style.backgroundColor = "#121212"; }
+                if(++i > 20) { 
+                    clearInterval(loop); 
+                    applyTheme(); // Returns to user-selected theme after party
+                }
             }, 100);
         }
     });
 
-    // --- 4. SENDING LOGIC ---
+    // --- 6. SENDING ---
     function send() {
         const input = document.getElementById('msg-input');
         const val = input.value.trim();
@@ -127,6 +147,14 @@
         channel.publish('msg', { user: myName, text: val });
         input.value = "";
     }
+
+    // Listen for theme changes from your other page
+    window.addEventListener('message', (e) => {
+        if (e.data.type === 'theme-update') {
+            localStorage.setItem('selected-theme', JSON.stringify(e.data.theme));
+            applyTheme();
+        }
+    });
 
     function changeName() {
         let n = prompt("New Name:", myName);
