@@ -124,6 +124,13 @@
             };
         }
 
+        function loadGBA(romUrl) {
+            const iframe = document.getElementById('game-iframe');
+            // This sends the link to your single gba.html file
+            iframe.src = "gba.html?rom=" + encodeURIComponent(romUrl);
+            iframe.focus();
+        }
+
         function changeTheme(themeName) { 
             document.body.setAttribute('data-theme', themeName); 
             localStorage.setItem('user-theme-choice', themeName);
