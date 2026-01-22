@@ -65,13 +65,19 @@
 
     const channel = ably.channels.get('school-chat');
 
-    // 3. THE "RESILIENT" COUNTER
     function updateCount() {
-        channel.presence.get((err, members) => {
-            if (err) return;
-            // Force the count to at least 1 if you are connected
-            const count = members.length > 0 ? members.length : 1; 
+        // We use "get" with wait:true to ensure Ably has finished the handshake
+        channel.presence.get({ waitForSync: true }, (err, members) => {
+            if (err) {
+                console.error("Presence error:", err);
+                return;
+            }
+            // Frequency Count: Total unique members
+            const count = members.length;
             document.getElementById('count').innerText = count;
+            
+            // Bonus: Update index.html title or counter if you want
+            window.parent.postMessage({ type: 'user-count', count: count }, '*');
         });
     }
 
