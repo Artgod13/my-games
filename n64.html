@@ -13,24 +13,26 @@
     <div id="game"></div>
 
     <script>
-        // Extract the ROM URL from the address bar
         const urlParams = new URLSearchParams(window.location.search);
         const romPath = urlParams.get('rom');
 
-        // Optimization Variables
-        EJS_player = '#game';
-        EJS_core = 'n64'; 
-        EJS_gameUrl = romPath;
+        // DIAGNOSTIC: If the path is empty, alert the user
+        if (!romPath) {
+            alert("Error: No ROM path found in the URL!");
+        }
+
+        // We must attach these to the 'window' for the loader to see them
+        window.EJS_player = '#game';
+        window.EJS_core = 'n64'; 
+        window.EJS_gameUrl = romPath;
         
-        // Using a high-speed CDN for the emulator engine
-        EJS_pathtodata = 'https://cdn.jsdelivr.net/gh/linuxguist/emulatorjs@main/data/';
+        window.EJS_pathtodata = 'https://cdn.jsdelivr.net/gh/linuxguist/emulatorjs@main/data/';
         
-        // Performance Tweaks (The "Coefficients" of Speed)
-        EJS_Settings = {
-            low_res: true,       // Reduces pixel load for smoother frame rates
-            threads: true,       // Uses multiple CPU cores if available
-            startOnLoaded: true, // Reduces wait time
-            quality: 'low'       // Prioritizes FPS over anti-aliasing
+        window.EJS_Settings = {
+            low_res: true,
+            threads: true,
+            startOnLoaded: true,
+            quality: 'low'
         };
     </script>
     <script src="https://cdn.jsdelivr.net/gh/linuxguist/emulatorjs@main/data/loader.js"></script>
