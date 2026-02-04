@@ -106,8 +106,9 @@
             <button onclick="loadGame('snowrider.html')" class="game-btn">Snow Rider 3D</button>
             <button onclick="loadGame('subway.html')" class="game-btn">Subway Surfers</button>
             <button onclick="loadGame('tetris.html')" class="game-btn">Tetris</button>
-            <button onclick="loadGBA('roms/zeldalinktothepast.gba')" class="game-btn">The Legend of Zelda: A Link to the Past GBA</button>
-            <button onclick="loadGBA('roms/Zelda - the Minish Cap.gba')" class="game-btn">The Legend of Zelda: The Minish Cap GBA</button>
+            <button onclick="loadGBA('roms/zeldalinktothepast.gba')" class="game-btn">Zelda: A Link to the Past GBA</button>
+            <button onclick="loadGBA('roms/Zelda - the Minish Cap.gba')" class="game-btn">Zelda: The Minish Cap GBA</button>
+            <button onclick="loadN64('roms/LegendofZeldaTheMajoraMask.z64')" class="game-btn">Zelda: Ocarina of Time N64</button>
         </div>
     </div>
 
@@ -126,6 +127,21 @@
                 iframe.focus();
                 // Send current theme to chat room whenever it loads
                 syncThemeWithIframe();
+            };
+        }
+
+        function loadN64(romUrl) {
+            const iframe = document.getElementById('game-iframe');
+            
+            // We point specifically to your new n64.html
+            // We add a 'cache buster' (?v=) to make sure it fetches the latest version of the large file
+            const finalPath = romUrl + "?v=" + Date.now();
+            
+            iframe.src = "n64.html?rom=" + encodeURIComponent(finalPath);
+            
+            // Ensure the iframe has focus so the controls work immediately
+            iframe.onload = () => {
+                iframe.focus();
             };
         }
 
