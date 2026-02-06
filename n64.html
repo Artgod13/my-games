@@ -1,40 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>N64 Core - Optimized</title>
+    <meta name="referrer" content="no-referrer">
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; }
-        #game { width: 100%; height: 100%; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #emulator { width: 100%; height: 100vh; }
     </style>
 </head>
 <body>
-    <div id="game"></div>
+    <div id="emulator"></div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const romPath = urlParams.get('rom');
+        const romUrl = urlParams.get('rom');
 
-        // DIAGNOSTIC: If the path is empty, alert the user
-        if (!romPath) {
-            alert("Error: No ROM path found in the URL!");
-        }
+        window.EJS_player = "#emulator";
+        window.EJS_gameUrl = romUrl; 
+        window.EJS_core = "n64"; // Changed to N64
+        window.EJS_startOnLoaded = true;
+        
+        // Using the same stable CDN you used for GBA
+        window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
 
-        // We must attach these to the 'window' for the loader to see them
-        window.EJS_player = '#game';
-        window.EJS_core = 'n64'; 
-        window.EJS_gameUrl = romPath;
-        
-        window.EJS_pathtodata = 'https://raw.githack.com/EmulatorJS/EmulatorJS/main/data/';
-        
-        window.EJS_Settings = {
-            low_res: true,
-            threads: true,
-            startOnLoaded: true,
-            quality: 'low'
+        // N64 needs more buttons than GBA (C-buttons and Z-trigger)
+        window.EJS_buttons = {
+            "z": "a",
+            "x": "b",
+            "c": "z",        // Z-Trigger (crucial for SM64)
+            "enter": "start",
+            "arrowup": "up",
+            "arrowdown": "down",
+            "arrowleft": "left",
+            "arrowright": "right",
+            "q": "l", 
+            "e": "r",
+            "i": "c-up",     // C-Buttons for camera
+            "k": "c-down",
+            "j": "c-left",
+            "l": "c-right"
         };
     </script>
-    <script src="https://cdn.jsdelivr.net/gh/linuxguist/emulatorjs@main/data/loader.js"></script>
+    <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
 </body>
 </html>
